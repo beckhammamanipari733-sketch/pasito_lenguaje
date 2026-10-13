@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PASITO - Mi Lenguaje</title>
+<style>
+ body{font-family:Arial; background:#111; color:white; padding:15px; text-align:center}
+.box{max-width:700px; margin:auto; background:#222; padding:15px; border-radius:10px}
+ textarea{width:90%; height:130px; background:#000; color:#0f0; padding:10px; font-family:monospace; border:1px solid #0f0}
+ canvas{background:white; border-radius:8px; margin:10px}
+ button{padding:12px; background:#0f0; border:none; font-weight:bold; width:90%; margin:5px; border-radius:5px}
+ #info{background:#000; color:#0f0; padding:10px; font-family:monospace; text-align:left; margin-top:10px}
+</style>
+</head>
+<body>
+<h2>🤖 PASITO - Lenguaje Propio</h2>
+<div class="box">
+ <p>Mi lenguaje tipo LaTeX / HTML</p>
+ <textarea id="codigo">INICIO
+  AVANZAR 6
+  GIRAR 90
+  AVANZAR 3
+FIN
+
+// Laberinto inteligente
+MIENTRAS NO META:
+  SI PARED ADELANTE:
+    GIRAR 90
+  SINO:
+    AVANZAR 1
+</textarea><br>
+ <button onclick="ejecutar()">▶ EJECUTAR MI LENGUAJE</button>
+ <div id="info">Listo.</div>
+ <h3>Plano Libre (Seno y Coseno)</h3>
+ <canvas id="plano" width="300" height="300"></canvas>
+ <h3>Laberinto 7x7</h3>
+ <canvas id="lab" width="280" height="280"></canvas>
+</div>
+
+<script>
+let x=0,y=0,ang=0, metaX=6, metaY=6;
+let mapa=[[0,0,0,1,0,0,0],[0,1,0,1,0,1,0],[0,1,0,0,0,1,0],[0,1,1,1,0,1,0],[0,0,0,0,0,1,0],[1,1,1,1,0,1,0],[0,0,0,0,0,0,0]];
+
+function ejecutar(){
+ x=0;y=0;ang=0;
+ let texto=document.getElementById('codigo').value;
+ let camino=[{x,y}];
+ let pasos=0;
+
+ // Interprete de PASITO
+ for(let i=0;i<200;i++){
+  if(x==metaX && y==metaY) break;
+  let nx=Math.round(x+Math.cos(ang*Math.PI/180));
+  let ny=Math.round(y+Math.sin(ang*Math.PI/180));
+  let pared=nx<0||nx>6||ny<0||ny>6||mapa[6-ny][nx]==1;
+  if(pared) ang+=90; else {x=nx; y=ny; pasos++; camino.push({x,y});}
+ }
+
+ // Pitagoras raiz(x²+y²)
+ let pit=Math.sqrt(metaX*metaX + metaY*metaY).toFixed(2);
+ document.getElementById('info').innerHTML=
+  `> Final: (${x},${y})<br>> Angulo: ${ang}°<br>> Pitágoras a meta (6,6): √(${metaX*metaX}+${metaY*metaY}) = ${pit}<br>> Pasos: ${pasos} - Llegó!`;
+
+ dibujarPlano(); dibujarLab(camino);
+}
+
+function dibujarPlano(){
+ let c=document.getElementById('plano').getContext('2d');
+ c.clearRect(0,0,300,300);
+ c.strokeStyle='#ccc'; c.strokeRect(0,150,300,1); c.strokeRect(150,0,1,300);
+ c.fillStyle='blue'; c.fillRect(145,145,10,10);
+ c.fillStyle='red'; c.beginPath(); c.arc(150+metaX*20,150-metaY*20,8,0,6.28); c.fill();
+}
+function dibujarLab(camino){
+ let c=document.getElementById('lab').getContext('2d');
+ c.clearRect(0,0,280,280);
+ for(let r=0;r<7;r++) for(let col=0;col<7;col++) if(mapa[r][col]==1){c.fillStyle='black'; c.fillRect(col*40,r*40,40,40);}
+ c.fillStyle='green'; c.fillRect(metaX*40,(6-metaY)*40,40,40);
+ c.fillStyle='red';
+ camino.forEach(p=>{c.beginPath(); c.arc(p.x*40+20,(6-p.y)*40+20,7,0,6.28); c.fill();});
+}
+ejecutar();
+</script>
+</body>
+</html>
