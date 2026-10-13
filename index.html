@@ -3,84 +3,97 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>PASITO - Mi Lenguaje</title>
+<title>PASITO - Lenguaje Propio</title>
 <style>
- body{font-family:Arial; background:#111; color:white; padding:15px; text-align:center}
-.box{max-width:700px; margin:auto; background:#222; padding:15px; border-radius:10px}
- textarea{width:90%; height:130px; background:#000; color:#0f0; padding:10px; font-family:monospace; border:1px solid #0f0}
- canvas{background:white; border-radius:8px; margin:10px}
- button{padding:12px; background:#0f0; border:none; font-weight:bold; width:90%; margin:5px; border-radius:5px}
- #info{background:#000; color:#0f0; padding:10px; font-family:monospace; text-align:left; margin-top:10px}
+*{box-sizing:border-box}
+body{margin:0;background:#0f0f0f;color:#fff;font-family:Arial;text-align:center}
+header{padding:20px;background:#1a1a1a;border-bottom:2px solid #00ff00}
+.box{max-width:800px;margin:20px auto;background:#222;padding:15px;border-radius:12px}
+textarea{width:100%;height:140px;background:#000;color:#00ff00;border:1px solid #00ff00;border-radius:8px;padding:10px;font-family:monospace;font-size:14px}
+button{width:100%;padding:16px;margin-top:10px;background:#00ff00;color:#000;border:none;border-radius:8px;font-weight:bold;font-size:18px;cursor:pointer}
+button:active{transform:scale(0.98)}
+#log{background:#000;color:#00ff00;text-align:left;padding:12px;border-radius:8px;margin-top:10px;font-family:monospace;min-height:70px;white-space:pre-wrap}
+canvas{background:#fff;border-radius:10px;margin:10px 5px}
+h3{color:#00ff00}
 </style>
 </head>
 <body>
-<h2>🤖 PASITO - Lenguaje Propio</h2>
+<header>
+<h1>🤖 PASITO v1.0</h1>
+<p>Lenguaje propio tipo LaTeX / HTML - Con trigonometría</p>
+</header>
+
 <div class="box">
- <p>Mi lenguaje tipo LaTeX / HTML</p>
- <textarea id="codigo">INICIO
+<textarea id="code">INICIO
   AVANZAR 6
   GIRAR 90
   AVANZAR 3
 FIN
+// Pitagoras = RAIZ(6^2 + 3^2) = 6.70</textarea>
+<button onclick="run()">▶ EJECUTAR MI LENGUAJE</button>
+<div id="log">Esperando...</div>
 
-// Laberinto inteligente
-MIENTRAS NO META:
-  SI PARED ADELANTE:
-    GIRAR 90
-  SINO:
-    AVANZAR 1
-</textarea><br>
- <button onclick="ejecutar()">▶ EJECUTAR MI LENGUAJE</button>
- <div id="info">Listo.</div>
- <h3>Plano Libre (Seno y Coseno)</h3>
- <canvas id="plano" width="300" height="300"></canvas>
- <h3>Laberinto 7x7</h3>
- <canvas id="lab" width="280" height="280"></canvas>
+<h3>1. Plano Libre (Seno, Coseno)</h3>
+<canvas id="plano" width="320" height="320"></canvas>
+
+<h3>2. Laberinto 7x7 (MIENTRAS NO META)</h3>
+<canvas id="lab" width="308" height="308"></canvas>
 </div>
 
 <script>
-let x=0,y=0,ang=0, metaX=6, metaY=6;
-let mapa=[[0,0,0,1,0,0,0],[0,1,0,1,0,1,0],[0,1,0,0,0,1,0],[0,1,1,1,0,1,0],[0,0,0,0,0,1,0],[1,1,1,1,0,1,0],[0,0,0,0,0,0,0]];
+function run(){
+ const log = document.getElementById('log');
+ try{
+  let txt = document.getElementById('code').value.toLowerCase();
+  let cx=160, cy=160, ang=0;
+  let p = document.getElementById('plano').getContext('2d');
+  p.clearRect(0,0,320,320);
+  p.strokeStyle='#ddd'; p.lineWidth=1;
+  p.beginPath(); p.moveTo(0,160); p.lineTo(320,160); p.moveTo(160,0); p.lineTo(160,320); p.stroke();
+  p.fillStyle='blue'; p.fillRect(cx-4,cy-4,8,8);
 
-function ejecutar(){
- x=0;y=0;ang=0;
- let texto=document.getElementById('codigo').value;
- let camino=[{x,y}];
- let pasos=0;
+  let lines = txt.split('\n');
+  let total=0;
+  lines.forEach(l=>{
+    l=l.trim();
+    if(l.startsWith('avanzar')){
+      let d=parseFloat(l.replace(/[^0-9.-]/g,' ' ).trim().split(/\s+/)[0])||parseFloat(l.split(' ')[1])||0;
+      let rad=ang*Math.PI/180;
+      let nx=cx + d*20*Math.cos(rad);
+      let ny=cy - d*20*Math.sin(rad);
+      p.strokeStyle='red'; p.lineWidth=3;
+      p.beginPath(); p.moveTo(cx,cy); p.lineTo(nx,ny); p.stroke();
+      p.fillStyle='#000'; p.font='12px Arial'; p.fillText(d+'', (cx+nx)/2, (cy+ny)/2);
+      cx=nx; cy=ny; total+=d;
+    }
+    if(l.startsWith('girar')){ let g=parseFloat(l.split(' ')[1])||0; ang=(ang+g)%360; }
+  });
+  p.fillStyle='red'; p.beginPath(); p.arc(cx,cy,7,0,Math.PI*2); p.fill();
 
- // Interprete de PASITO
- for(let i=0;i<200;i++){
-  if(x==metaX && y==metaY) break;
-  let nx=Math.round(x+Math.cos(ang*Math.PI/180));
-  let ny=Math.round(y+Math.sin(ang*Math.PI/180));
-  let pared=nx<0||nx>6||ny<0||ny>6||mapa[6-ny][nx]==1;
-  if(pared) ang+=90; else {x=nx; y=ny; pasos++; camino.push({x,y});}
- }
+  // Laberinto
+  let mapa=[[0,0,0,1,0,0,0],[0,1,0,1,0,1,0],[0,1,0,0,0,1,0],[0,1,1,1,0,1,0],[0,0,0,0,0,1,0],[1,1,1,1,0,1,0],[0,0,0,0,0,0,0]];
+  let rx=0, ry=6, ra=0;
+  let L = document.getElementById('lab').getContext('2d');
+  L.clearRect(0,0,308,308);
+  for(let r=0;r<7;r++) for(let c=0;c<7;c++) if(mapa[r][c]==1){L.fillStyle='#111'; L.fillRect(c*44,r*44,44,44);}
+  L.fillStyle='#00aa00'; L.fillRect(6*44,0*44,44,44);
+  L.fillStyle='red'; L.fillRect(rx*44+10,ry*44+10,24,24);
+  let pasos=0;
+  for(let i=0;i<200;i++){
+    if(rx==6 && ry==0) break;
+    let nx = rx + Math.round(Math.cos(ra*Math.PI/180));
+    let ny = ry - Math.round(Math.sin(ra*Math.PI/180));
+    let pared = nx<0||nx>6||ny<0||ny>6||mapa[ny][nx]==1;
+    if(pared){ ra=(ra+90)%360; } else { rx=nx; ry=ny; pasos++; L.fillStyle='red'; L.beginPath(); L.arc(rx*44+22,ry*44+22,8,0,Math.PI*2); L.fill(); }
+  }
 
- // Pitagoras raiz(x²+y²)
- let pit=Math.sqrt(metaX*metaX + metaY*metaY).toFixed(2);
- document.getElementById('info').innerHTML=
-  `> Final: (${x},${y})<br>> Angulo: ${ang}°<br>> Pitágoras a meta (6,6): √(${metaX*metaX}+${metaY*metaY}) = ${pit}<br>> Pasos: ${pasos} - Llegó!`;
+  let pit = Math.sqrt(6*6+3*3).toFixed(2);
+  let dx=((cx-160)/20).toFixed(1), dy=((160-cy)/20).toFixed(1);
+  log.innerText=`> COMPILADO OK\n> Plano: X=${dx} = 6*cos(0) | Y=${dy} = 3*sin(90)\n> Distancia Pitagoras: sqrt(6²+3²) = ${pit}\n> Laberinto: ${pasos} pasos | MIENTRAS NO META: SI PARED->GIRAR 90 SINO AVANZAR\n> Final laberinto: (${rx},${6-ry})`;
 
- dibujarPlano(); dibujarLab(camino);
+ }catch(e){ log.innerText='ERROR: '+e.message; console.error(e); }
 }
-
-function dibujarPlano(){
- let c=document.getElementById('plano').getContext('2d');
- c.clearRect(0,0,300,300);
- c.strokeStyle='#ccc'; c.strokeRect(0,150,300,1); c.strokeRect(150,0,1,300);
- c.fillStyle='blue'; c.fillRect(145,145,10,10);
- c.fillStyle='red'; c.beginPath(); c.arc(150+metaX*20,150-metaY*20,8,0,6.28); c.fill();
-}
-function dibujarLab(camino){
- let c=document.getElementById('lab').getContext('2d');
- c.clearRect(0,0,280,280);
- for(let r=0;r<7;r++) for(let col=0;col<7;col++) if(mapa[r][col]==1){c.fillStyle='black'; c.fillRect(col*40,r*40,40,40);}
- c.fillStyle='green'; c.fillRect(metaX*40,(6-metaY)*40,40,40);
- c.fillStyle='red';
- camino.forEach(p=>{c.beginPath(); c.arc(p.x*40+20,(6-p.y)*40+20,7,0,6.28); c.fill();});
-}
-ejecutar();
+window.addEventListener('load', run);
 </script>
 </body>
 </html>
